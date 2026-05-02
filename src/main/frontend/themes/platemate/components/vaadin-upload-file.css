@@ -1,0 +1,5 @@
+:host-context(html[theme~="dark"]) {
+    --lumo-base-color: #1f2226 !important;
+    --lumo-primary-color: var(--pm-bright-lime) !important;
+    --lumo-primary-text-color: var(--pm-bright-lime) !important;
+}

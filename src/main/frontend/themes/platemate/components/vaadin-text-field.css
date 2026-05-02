@@ -1,0 +1,7 @@
+:host(.pm-required-field)::part(required-indicator) {
+    color: #e53935;
+}
+
+:host(.pm-required-field)::part(required-indicator)::after {
+    color: #e53935;
+}

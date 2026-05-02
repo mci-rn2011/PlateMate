@@ -1,0 +1,22 @@
+:host-context(html[theme~="dark"]) {
+    --lumo-base-color: #1f2226 !important;
+    --lumo-primary-color: var(--pm-bright-lime) !important;
+    --lumo-primary-text-color: var(--pm-bright-lime) !important;
+    --lumo-body-text-color: #f3f5f1 !important;
+    --lumo-secondary-text-color: #bcc8b4 !important;
+}
+
+:host-context(html[theme~="dark"]) [part="overlay"] {
+    background:
+            linear-gradient(145deg, rgba(34, 37, 42, 0.98), rgba(24, 27, 32, 0.98)),
+            #1f2226;
+    color: var(--lumo-body-text-color);
+}
+
+:host-context(html[theme~="dark"]) [part="backdrop"] {
+    background: rgba(0, 0, 0, 0.72) !important;
+}
+
+[part="backdrop"] {
+    background: rgba(0, 0, 0, 0.72) !important;
+}

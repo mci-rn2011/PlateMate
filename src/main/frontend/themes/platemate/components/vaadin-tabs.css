@@ -1,0 +1,10 @@
+:host-context(html[theme~="dark"]) {
+    --lumo-primary-color: var(--pm-bright-lime) !important;
+    --lumo-primary-text-color: var(--pm-bright-lime) !important;
+}
+
+:host-context(html[theme~="dark"]) [part="back-button"],
+:host-context(html[theme~="dark"]) [part="forward-button"],
+:host-context(html[theme~="dark"]) [part="tabs"] {
+    color: var(--pm-bright-lime);
+}

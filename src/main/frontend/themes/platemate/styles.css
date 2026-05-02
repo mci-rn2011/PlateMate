@@ -1,0 +1,651 @@
+@import url("./restaurant.css");
+@import url("./customer.css");
+@import url("./driver.css");
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html {
+    --pm-plate-cream: #fffff0;
+    --pm-warm-cream: #fff0c0;
+    --pm-deep-green: #004020;
+    --pm-brand-green: #005020;
+    --pm-fresh-green: #006020;
+    --pm-lime: #70b000;
+    --pm-bright-lime: #80c000;
+    --pm-graphite: #102018;
+    --pm-card: rgba(255, 255, 240, 0.88);
+    --pm-card-border: rgba(0, 80, 32, 0.14);
+    --pm-page-bg:
+            radial-gradient(circle at 12% 8%, rgba(128, 192, 0, 0.22), transparent 28rem),
+            radial-gradient(circle at 88% 0%, rgba(255, 240, 192, 0.85), transparent 24rem),
+            linear-gradient(135deg, #fffff0 0%, #fff7d4 48%, #edf8d7 100%);
+
+    --lumo-base-color: var(--pm-plate-cream);
+    --lumo-primary-color: var(--pm-brand-green);
+    --lumo-primary-text-color: var(--pm-brand-green);
+    --lumo-body-text-color: var(--pm-graphite);
+    --lumo-header-text-color: var(--pm-deep-green);
+    --lumo-secondary-text-color: #50604f;
+    background: var(--pm-page-bg);
+    color: var(--pm-graphite);
+}
+
+html[theme~="dark"],
+html[theme~="dark"] body,
+html[theme~="dark"] vaadin-app-layout {
+    --pm-card: rgba(31, 34, 38, 0.92);
+    --pm-card-border: rgba(255, 255, 255, 0.1);
+    --pm-page-bg:
+            radial-gradient(circle at 12% 8%, rgba(255, 255, 255, 0.055), transparent 26rem),
+            radial-gradient(circle at 88% 0%, rgba(255, 255, 255, 0.04), transparent 24rem),
+            linear-gradient(135deg, #111317 0%, #17191d 52%, #0d0f12 100%);
+
+    --lumo-base-color: #181b20 !important;
+    --lumo-primary-color: var(--pm-bright-lime) !important;
+    --lumo-primary-text-color: var(--pm-bright-lime) !important;
+    --lumo-primary-contrast-color: var(--pm-plate-cream) !important;
+    --lumo-body-text-color: #f3f5f1 !important;
+    --lumo-header-text-color: #ffffff !important;
+    --lumo-secondary-text-color: #bcc8b4 !important;
+    --lumo-contrast-5pct: rgba(255, 255, 255, 0.05);
+    --lumo-contrast-10pct: rgba(255, 255, 255, 0.1);
+    --lumo-contrast-20pct: rgba(255, 255, 255, 0.18);
+    --lumo-contrast-30pct: rgba(255, 255, 255, 0.28);
+    --lumo-contrast-40pct: rgba(255, 255, 255, 0.38);
+    --lumo-contrast-50pct: rgba(255, 255, 255, 0.5);
+    --lumo-contrast-60pct: rgba(255, 255, 255, 0.6);
+    --lumo-contrast-70pct: rgba(255, 255, 255, 0.7);
+    --lumo-contrast-80pct: rgba(255, 255, 255, 0.8);
+    --lumo-contrast-90pct: rgba(255, 255, 255, 0.9);
+    --lumo-contrast: #ffffff;
+    background: var(--pm-page-bg);
+    color: var(--lumo-body-text-color);
+}
+
+html[theme~="dark"] vaadin-button,
+html[theme~="dark"] vaadin-tab,
+html[theme~="dark"] vaadin-upload,
+html[theme~="dark"] vaadin-upload-file,
+html[theme~="dark"] .pm-eyebrow,
+html[theme~="dark"] .pm-status-pill.is-open,
+html[theme~="dark"] .pm-soft-action,
+html[theme~="dark"] .pm-status-action.is-open {
+    --lumo-primary-color: var(--pm-bright-lime) !important;
+    --lumo-primary-text-color: var(--pm-bright-lime) !important;
+}
+
+html[theme~="dark"] vaadin-button:not([theme~="primary"]):not(.pm-primary-action):not(.pm-danger-action):not(.pm-login-primary):not(.pm-status-action):not(.pm-availability-toggle),
+html[theme~="dark"] vaadin-upload vaadin-button {
+    color: var(--pm-bright-lime);
+}
+
+html[theme~="dark"] vaadin-button.pm-login-primary,
+html[theme~="dark"] vaadin-button.pm-primary-action,
+html[theme~="dark"] vaadin-button.pm-status-action.is-active,
+html[theme~="dark"] vaadin-button.pm-availability-toggle.is-resume {
+    color: white !important;
+}
+
+html[theme~="dark"] vaadin-tabs {
+    --lumo-primary-color: var(--pm-bright-lime) !important;
+    --lumo-primary-text-color: var(--pm-bright-lime) !important;
+}
+
+body {
+    background: var(--pm-page-bg);
+    color: var(--lumo-body-text-color);
+    overflow-x: hidden;
+}
+
+vaadin-app-layout {
+    background: transparent;
+    color: var(--lumo-body-text-color);
+}
+
+.pm-navbar {
+    background: var(--pm-card);
+    border-bottom: 1px solid var(--pm-card-border);
+    box-shadow: 0 14px 38px rgba(0, 64, 32, 0.12);
+    backdrop-filter: blur(18px);
+    flex-wrap: wrap;
+    gap: var(--lumo-space-s);
+}
+
+html[theme~="dark"] .pm-navbar {
+    box-shadow: 0 14px 38px rgba(0, 0, 0, 0.28);
+}
+
+.pm-navbar a {
+    min-height: 2.35rem;
+    display: inline-flex;
+    align-items: center;
+    padding: 0 var(--lumo-space-s);
+    border-radius: 999px;
+    color: var(--lumo-body-text-color);
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.pm-brand {
+    padding-right: var(--lumo-space-m);
+}
+
+.pm-brand-wordmark {
+    height: 44px;
+    max-width: 180px;
+    object-fit: contain;
+}
+
+.pm-current-user {
+    color: var(--lumo-secondary-text-color);
+    font-weight: 600;
+}
+
+.pm-current-user-link {
+    color: var(--lumo-body-text-color);
+    font-weight: 900;
+}
+
+.pm-navbar-controls {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--lumo-space-s);
+}
+
+.pm-preference-controls {
+    gap: var(--lumo-space-xs);
+}
+
+.pm-language-toggle,
+.pm-theme-toggle,
+.pm-cart-nav-button {
+    min-width: 44px;
+    width: 44px;
+    padding: 0;
+    border-radius: 999px;
+}
+
+.pm-cart-nav-button {
+    position: relative;
+    overflow: visible;
+}
+
+.pm-cart-badge {
+    position: absolute;
+    top: -0.35rem;
+    right: -0.35rem;
+    display: inline-grid;
+    place-items: center;
+    min-width: 1.25rem;
+    height: 1.25rem;
+    padding: 0 0.28rem;
+    border: 2px solid var(--lumo-base-color);
+    border-radius: 999px;
+    background: #e53935;
+    color: white;
+    font-size: 0.72rem;
+    font-weight: 900;
+    line-height: 1;
+}
+
+.pm-cart-badge.is-empty {
+    display: none;
+}
+
+.pm-language-toggle {
+    overflow: hidden;
+}
+
+.pm-language-flag {
+    display: block;
+    width: 28px;
+    height: 20px;
+    object-fit: cover;
+    border-radius: 5px;
+    box-shadow: 0 0 0 1px var(--pm-card-border);
+}
+
+.pm-theme-toggle vaadin-icon {
+    width: 1.15rem;
+    height: 1.15rem;
+}
+
+.pm-theme-emoji {
+    font-family: "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif;
+    font-size: 1.25rem;
+    line-height: 1;
+}
+
+.pm-login-view {
+    position: relative;
+    overflow: hidden;
+    background: var(--pm-page-bg);
+    color: var(--lumo-body-text-color);
+    padding: var(--lumo-space-xl);
+}
+
+.pm-login-card {
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: min(420px, 92vw);
+    padding: clamp(1.4rem, 4vw, 2.4rem);
+    border: 1px solid var(--pm-card-border);
+    border-radius: 32px;
+    background:
+            linear-gradient(145deg, rgba(255, 255, 240, 0.88), rgba(255, 240, 192, 0.72)),
+            var(--pm-card);
+    box-shadow: 0 28px 70px rgba(0, 64, 32, 0.16);
+    backdrop-filter: blur(22px);
+}
+
+.pm-login-card vaadin-text-field,
+.pm-login-card vaadin-password-field {
+    max-width: 100%;
+}
+
+html[theme~="dark"] .pm-login-card {
+    background:
+            linear-gradient(145deg, rgba(36, 39, 44, 0.94), rgba(24, 27, 32, 0.84)),
+            var(--pm-card);
+}
+
+html[theme~="dark"] vaadin-dialog-overlay::part(overlay) {
+    --lumo-base-color: #1f2226 !important;
+    --lumo-primary-color: var(--pm-bright-lime) !important;
+    --lumo-primary-text-color: var(--pm-bright-lime) !important;
+    --lumo-body-text-color: #f3f5f1 !important;
+    --lumo-secondary-text-color: #bcc8b4 !important;
+    background:
+            linear-gradient(145deg, rgba(34, 37, 42, 0.98), rgba(24, 27, 32, 0.98)),
+            #1f2226;
+    color: var(--lumo-body-text-color);
+}
+
+html[theme~="dark"] vaadin-dialog-overlay::part(backdrop) {
+    background: rgba(0, 0, 0, 0.72) !important;
+}
+
+.pm-login-logo {
+    width: min(360px, 72vw);
+    height: auto;
+    filter: drop-shadow(0 18px 34px rgba(0, 64, 32, 0.18));
+}
+
+.pm-login-subtitle {
+    max-width: 34ch;
+    text-align: center;
+    color: var(--lumo-secondary-text-color);
+    margin-top: var(--lumo-space-m);
+}
+
+.pm-login-button {
+    background: var(--pm-card);
+    color: var(--lumo-body-text-color);
+    border: 1px solid var(--pm-card-border);
+    box-shadow: 0 12px 28px rgba(0, 64, 32, 0.14);
+}
+
+.pm-login-primary {
+    margin-top: var(--lumo-space-s);
+    background: linear-gradient(135deg, var(--pm-brand-green), var(--pm-lime));
+    color: white;
+    font-weight: 800;
+    box-shadow: 0 14px 30px rgba(0, 80, 32, 0.24);
+}
+
+.pm-login-guest {
+    margin-top: var(--lumo-space-m);
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    color: var(--lumo-primary-text-color);
+    cursor: pointer;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.pm-login-guest:hover {
+    text-decoration: underline;
+}
+
+.pm-login-hint {
+    margin-top: var(--lumo-space-s);
+    color: var(--lumo-secondary-text-color);
+    font-size: var(--lumo-font-size-s);
+}
+
+.pm-login-footer {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--lumo-space-m);
+    margin-top: var(--lumo-space-l);
+    color: var(--lumo-secondary-text-color);
+    font-size: var(--lumo-font-size-s);
+}
+
+.pm-login-footer a {
+    color: var(--lumo-primary-text-color);
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.pm-admin-taskbar {
+    z-index: 2;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--lumo-space-s);
+    width: min(860px, 94vw);
+    margin-top: var(--lumo-space-l);
+    padding: var(--lumo-space-m);
+    border: 1px solid var(--pm-card-border);
+    border-radius: 999px;
+    background: var(--pm-card);
+    box-shadow: 0 20px 52px rgba(0, 64, 32, 0.14);
+    backdrop-filter: blur(18px);
+}
+
+.pm-admin-shortcut {
+    border-radius: 999px;
+    background: rgba(255, 255, 240, 0.7);
+    color: var(--lumo-body-text-color);
+    font-weight: 800;
+}
+
+html[theme~="dark"] .pm-admin-shortcut {
+    background: rgba(255, 255, 240, 0.08);
+}
+
+.floaters {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+
+.floater {
+    position: absolute;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: clamp(4.2rem, 8vw, 7rem);
+    height: clamp(4.2rem, 8vw, 7rem);
+    border-radius: 999px;
+    background:
+            radial-gradient(circle at 34% 28%, rgba(255, 255, 240, 0.78), rgba(255, 255, 240, 0.22) 70%);
+    border: 1px solid rgba(255, 255, 240, 0.42);
+    box-shadow: 0 18px 48px rgba(0, 64, 32, 0.12);
+    backdrop-filter: blur(6px);
+    font-size: clamp(2.3rem, 4.4vw, 4rem);
+    opacity: 0.5;
+    filter: saturate(1.08);
+    animation: pm-float 12s ease-in-out infinite;
+}
+
+.floater:nth-child(1) {
+    left: 6%;
+    top: 10%;
+    animation-delay: -1s;
+}
+
+.floater:nth-child(2) {
+    left: 17%;
+    bottom: 14%;
+    animation-delay: -5s;
+    opacity: 0.42;
+}
+
+.floater:nth-child(3) {
+    right: 10%;
+    top: 16%;
+    animation-delay: -2s;
+}
+
+.floater:nth-child(4) {
+    right: 20%;
+    bottom: 14%;
+    animation-delay: -7s;
+    opacity: 0.4;
+}
+
+.floater:nth-child(5) {
+    left: 45%;
+    top: 5%;
+    animation-delay: -4s;
+}
+
+.floater:nth-child(6) {
+    left: 6%;
+    top: 58%;
+    animation-delay: -8s;
+}
+
+.floater:nth-child(7) {
+    right: 6%;
+    top: 54%;
+    animation-delay: -3s;
+}
+
+.floater:nth-child(8) {
+    left: 52%;
+    bottom: 8%;
+    animation-delay: -6s;
+}
+
+.floater:nth-child(9) {
+    left: 28%;
+    top: 24%;
+    animation-delay: -9s;
+    opacity: 0.28;
+}
+
+.floater:nth-child(10) {
+    right: 30%;
+    top: 26%;
+    animation-delay: -10s;
+    opacity: 0.3;
+}
+
+.floater:nth-child(11) {
+    left: 32%;
+    bottom: 3%;
+    animation-delay: -11s;
+}
+
+.floater:nth-child(12) {
+    right: 32%;
+    bottom: 1%;
+    animation-delay: -12s;
+}
+
+.floater:nth-child(13) {
+    left: 1%;
+    bottom: 34%;
+    animation-delay: -13s;
+    opacity: 0.46;
+}
+
+.floater:nth-child(14) {
+    right: 1%;
+    bottom: 34%;
+    animation-delay: -14s;
+    opacity: 0.46;
+}
+
+.floater:nth-child(15) {
+    left: 14%;
+    top: 42%;
+    animation-delay: -15s;
+}
+
+.floater:nth-child(16) {
+    right: 14%;
+    top: 42%;
+    animation-delay: -16s;
+}
+
+.pm-public-page {
+    justify-content: center;
+    background: var(--pm-page-bg);
+    color: var(--lumo-body-text-color);
+    padding: var(--lumo-space-xl);
+}
+
+.pm-legal-card {
+    width: min(760px, 92vw);
+    padding: clamp(1.4rem, 4vw, 2.4rem);
+    border: 1px solid var(--pm-card-border);
+    border-radius: 28px;
+    background: var(--pm-card);
+    box-shadow: 0 24px 60px rgba(0, 64, 32, 0.14);
+}
+
+@keyframes pm-float {
+    0%,
+    100% {
+        transform: translate3d(0, 0, 0) rotate(-4deg) scale(1);
+    }
+
+    50% {
+        transform: translate3d(2.6rem, -3rem, 0) rotate(9deg) scale(1.08);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .floater {
+        animation: none;
+        transform: none;
+        opacity: 0.28;
+    }
+}
+
+vaadin-grid {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 18px 42px rgba(0, 64, 32, 0.14);
+}
+
+@media (max-width: 760px) {
+    .pm-navbar {
+        padding: var(--lumo-space-s) !important;
+    }
+
+    .pm-navbar a {
+        min-height: 2rem;
+        padding: 0 var(--lumo-space-xs);
+        font-size: var(--lumo-font-size-s);
+    }
+
+    .pm-brand {
+        flex: 1 1 auto;
+        padding-right: 0;
+    }
+
+    .pm-current-user {
+        display: none;
+    }
+
+    .pm-brand-wordmark {
+        height: 36px;
+        max-width: 132px;
+    }
+
+    .pm-login-view {
+        justify-content: flex-start;
+        min-height: 100vh;
+        padding: var(--lumo-space-m);
+        overflow-y: auto;
+    }
+
+    .pm-login-card {
+        width: min(100%, 430px);
+        margin-top: var(--lumo-space-l);
+        border-radius: 26px;
+    }
+
+    .pm-login-logo {
+        width: min(300px, 78vw);
+    }
+
+    .pm-login-subtitle {
+        margin-top: var(--lumo-space-s);
+        font-size: var(--lumo-font-size-s);
+    }
+
+    .pm-admin-taskbar {
+        position: static;
+        width: min(100%, 430px);
+        max-height: 34vh;
+        overflow-y: auto;
+        justify-content: flex-start;
+        border-radius: 24px;
+        padding: var(--lumo-space-s);
+    }
+
+    .pm-admin-shortcut {
+        flex: 1 1 8rem;
+    }
+
+    .floater {
+        width: 4rem;
+        height: 4rem;
+        font-size: 2.2rem;
+        opacity: 0.34;
+    }
+
+    .floater:nth-child(n+9) {
+        display: none;
+    }
+}
+
+@media (max-height: 700px) {
+    .pm-login-view {
+        justify-content: flex-start;
+        overflow-y: auto;
+    }
+
+    .floater:nth-child(n+7) {
+        display: none;
+    }
+}
+
+@media (max-width: 430px) {
+    .pm-brand {
+        flex-basis: 112px;
+    }
+
+    .pm-brand-wordmark {
+        height: 32px;
+        max-width: 112px;
+    }
+
+    .pm-preference-controls {
+        gap: 0.25rem;
+    }
+
+    .pm-language-toggle,
+    .pm-theme-toggle {
+        min-width: 38px;
+        width: 38px;
+    }
+
+    .pm-login-card {
+        padding: var(--lumo-space-m);
+    }
+
+    .pm-login-footer {
+        gap: var(--lumo-space-s);
+    }
+
+    .floater:nth-child(n+5) {
+        display: none;
+    }
+}

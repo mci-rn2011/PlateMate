@@ -1,0 +1,22 @@
+:host {
+    --lumo-primary-color: var(--pm-brand-green);
+    --lumo-primary-text-color: var(--pm-brand-green);
+}
+
+:host-context(html[theme~="dark"]) {
+    --lumo-primary-color: var(--pm-bright-lime) !important;
+    --lumo-primary-text-color: var(--pm-bright-lime) !important;
+    --lumo-base-color: #1f2226 !important;
+    color: var(--pm-bright-lime);
+}
+
+:host-context(html[theme~="dark"]):host([theme~="primary"]) {
+    color: var(--pm-plate-cream);
+}
+
+:host-context(html[theme~="dark"]):host(.pm-login-primary),
+:host-context(html[theme~="dark"]):host(.pm-primary-action),
+:host-context(html[theme~="dark"]):host(.pm-status-action.is-active),
+:host-context(html[theme~="dark"]):host(.pm-availability-toggle.is-resume) {
+    color: white !important;
+}
