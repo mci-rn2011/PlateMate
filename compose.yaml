@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: platemate-postgres
+    environment:
+      POSTGRES_DB: platemate
+      POSTGRES_USER: platemate
+      POSTGRES_PASSWORD: platemate
+    ports:
+      - "5432:5432"
+    volumes:
+      - platemate-postgres-data:/var/lib/postgresql/data
+
+volumes:
+  platemate-postgres-data:

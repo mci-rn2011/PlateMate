@@ -1,0 +1,68 @@
+# Build output
+target/
+build/
+out/
+dist/
+
+# Java / Maven / Gradle
+.mvn/wrapper/maven-wrapper.jar
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+*.log
+
+# Node / Vaadin frontend cache
+node_modules/
+frontend/generated/
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+vite.generated.ts
+vite.config.ts.timestamp-*
+types.d.ts
+
+# Vaadin / Spring Boot generated files
+.vaadin/
+generated/
+application-local.properties
+
+# Runtime uploads
+uploads/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.jks
+docs/
+
+# IDEs
+.idea/
+*.iml
+.vscode/
+.project
+.classpath
+.settings/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Test and coverage output
+coverage/
+reports/
+surefire-reports/
+failsafe-reports/
+
+# Local database files
+*.db
+*.sqlite
+*.sqlite3
+
+.m2/
