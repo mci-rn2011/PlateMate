@@ -6,6 +6,8 @@ const PORT = Number(process.env.PLATEMATE_WEBHOOK_PORT || 9091);
 const SECRET = process.env.PLATEMATE_WEBHOOK_SECRET || "";
 const DEPLOY_SCRIPT = process.env.PLATEMATE_DEPLOY_SCRIPT || "C:\\apps\\platemate\\repo\\deployment\\deploy.ps1";
 const DEPLOY_BRANCH = process.env.PLATEMATE_DEPLOY_BRANCH || "main";
+const REPO_PATH = process.env.PLATEMATE_REPO_PATH || "";
+const RUNTIME_PATH = process.env.PLATEMATE_RUNTIME_PATH || "";
 
 let deploymentRunning = false;
 
@@ -28,9 +30,18 @@ function runDeploy() {
   }
 
   deploymentRunning = true;
+  const args = ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", DEPLOY_SCRIPT];
+  if (REPO_PATH) {
+    args.push("-RepoPath", REPO_PATH);
+  }
+  if (RUNTIME_PATH) {
+    args.push("-RuntimePath", RUNTIME_PATH);
+  }
+
+  console.log(`Starting deployment from ${REPO_PATH || "deploy script default repo path"}`);
   execFile(
     "powershell.exe",
-    ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", DEPLOY_SCRIPT],
+    args,
     { windowsHide: true },
     (error, stdout, stderr) => {
       deploymentRunning = false;
