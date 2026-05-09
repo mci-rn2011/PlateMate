@@ -1,6 +1,6 @@
 param(
-    [string] $RepoPath = "C:\apps\platemate\repo",
-    [string] $RuntimePath = "C:\apps\platemate\current",
+    [string] $RepoPath = $(if ($env:PLATEMATE_REPO_PATH) { $env:PLATEMATE_REPO_PATH } else { Split-Path -Parent $PSScriptRoot }),
+    [string] $RuntimePath = $(if ($env:PLATEMATE_RUNTIME_PATH) { $env:PLATEMATE_RUNTIME_PATH } else { "C:\apps\platemate\current" }),
     [string] $AppName = "platemate",
     [switch] $SkipGitPull
 )
