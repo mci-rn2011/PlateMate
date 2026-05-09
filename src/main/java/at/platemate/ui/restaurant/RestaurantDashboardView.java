@@ -257,6 +257,11 @@ public class RestaurantDashboardView extends VerticalLayout {
 
     private void renderBoard(List<CustomerOrder> orders) {
         board.removeAll();
+        if (showingPastOrders) {
+            board.addClassName("pm-order-board-past");
+        } else {
+            board.removeClassName("pm-order-board-past");
+        }
         List<CustomerOrder> visible = orders.stream()
                 .filter(order -> showingPastOrders != ACTIVE_STATUSES.contains(order.getStatus()))
                 .toList();
@@ -271,15 +276,13 @@ public class RestaurantDashboardView extends VerticalLayout {
             return;
         }
 
-        Map<OrderStatus, List<CustomerOrder>> grouped = visible.stream()
-                .collect(Collectors.groupingBy(CustomerOrder::getStatus));
-
         if (showingPastOrders) {
-            addLane(grouped, getTranslation("restaurant.dashboard.lane.past"), OrderStatus.DELIVERED,
-                    OrderStatus.REJECTED, OrderStatus.CANCELLED);
+            visible.forEach(order -> board.add(createOrderCard(order)));
             return;
         }
 
+        Map<OrderStatus, List<CustomerOrder>> grouped = visible.stream()
+                .collect(Collectors.groupingBy(CustomerOrder::getStatus));
         addLane(grouped, getTranslation("restaurant.dashboard.lane.new"), OrderStatus.PLACED, OrderStatus.PAYMENT_PENDING);
         addLane(grouped, getTranslation("restaurant.dashboard.lane.preparing"), OrderStatus.ACCEPTED, OrderStatus.PREPARING);
         addLane(grouped, getTranslation("restaurant.dashboard.lane.readyForPickup"), OrderStatus.READY_FOR_PICKUP);

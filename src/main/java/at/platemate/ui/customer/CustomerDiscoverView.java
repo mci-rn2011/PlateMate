@@ -12,7 +12,10 @@ import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 
+import at.platemate.auth.MockSessionService;
 import at.platemate.cart.CartService;
+import at.platemate.delivery.GeocodedLocation;
+import at.platemate.delivery.LocationService;
 import at.platemate.restaurant.Restaurant;
 import at.platemate.restaurant.RestaurantEventBroadcaster;
 import at.platemate.restaurant.RestaurantOpeningHours;
@@ -51,6 +54,8 @@ public class CustomerDiscoverView extends VerticalLayout {
     private final RestaurantService restaurantService;
     private final CartService cartService;
     private final RestaurantEventBroadcaster restaurantEventBroadcaster;
+    private final LocationService locationService;
+    private final MockSessionService sessionService;
     private final TextField location = new TextField();
     private final TextField search = new TextField();
     private final Span locationHint = new Span();
@@ -64,10 +69,14 @@ public class CustomerDiscoverView extends VerticalLayout {
     public CustomerDiscoverView(
             RestaurantService restaurantService,
             CartService cartService,
-            RestaurantEventBroadcaster restaurantEventBroadcaster) {
+            RestaurantEventBroadcaster restaurantEventBroadcaster,
+            LocationService locationService,
+            MockSessionService sessionService) {
         this.restaurantService = restaurantService;
         this.cartService = cartService;
         this.restaurantEventBroadcaster = restaurantEventBroadcaster;
+        this.locationService = locationService;
+        this.sessionService = sessionService;
 
         setSizeFull();
         setPadding(false);
@@ -75,6 +84,7 @@ public class CustomerDiscoverView extends VerticalLayout {
         addClassNames("pm-customer-page", "pm-discover-page");
 
         add(createHero(), createFilterPanel(), restaurantGrid);
+        restoreSelectedLocation();
         refreshRestaurants();
     }
 
@@ -127,13 +137,77 @@ public class CustomerDiscoverView extends VerticalLayout {
     }
 
     private void confirmManualLocation() {
-        customerLatitude = null;
-        customerLongitude = null;
         String value = location.getValue() == null ? "" : location.getValue().trim();
-        locationHint.setText(value.isBlank()
-                ? ""
-                : getTranslation("customer.discover.location.manual", value));
+        if (value.isBlank()) {
+            customerLatitude = null;
+            customerLongitude = null;
+            sessionService.clearSelectedDeliveryLocation();
+            locationHint.setText("");
+            refreshRestaurants();
+            return;
+        }
+        List<GeocodedLocation> suggestions = locationService.searchForwardGeocode(value, 5);
+        if (suggestions.isEmpty()) {
+            Notification.show(getTranslation("customer.discover.location.notFound"));
+            return;
+        }
+        if (suggestions.size() == 1) {
+            applyLocation(suggestions.get(0), getTranslation("customer.discover.location.verified"));
+            return;
+        }
+        showLocationPicker(suggestions);
+    }
+
+    private void showLocationPicker(List<GeocodedLocation> suggestions) {
+        Dialog dialog = new Dialog();
+        dialog.addClassName("pm-location-picker-dialog");
+        dialog.setHeaderTitle(getTranslation("customer.discover.location.choose"));
+        Div list = new Div();
+        list.addClassName("pm-location-suggestion-list");
+        suggestions.forEach(suggestion -> {
+            Button option = new Button(suggestion.normalizedAddress(), event -> {
+                applyLocation(suggestion, getTranslation("customer.discover.location.verified"));
+                dialog.close();
+            });
+            option.addClassName("pm-location-suggestion");
+            list.add(option);
+        });
+        dialog.add(list);
+        dialog.getFooter().add(new Button(getTranslation("action.close"), event -> dialog.close()));
+        dialog.open();
+    }
+
+    private void applyLocation(GeocodedLocation geocodedLocation, String hint) {
+        customerLatitude = geocodedLocation.coordinates().latitude();
+        customerLongitude = geocodedLocation.coordinates().longitude();
+        sessionService.setSelectedDeliveryLocation(geocodedLocation);
+        location.setValue(geocodedLocation.normalizedAddress());
+        locationHint.setText(hint);
         refreshRestaurants();
+    }
+
+    private void restoreSelectedLocation() {
+        sessionService.getSelectedDeliveryLocation().ifPresent(selected -> {
+            customerLatitude = selected.coordinates().latitude();
+            customerLongitude = selected.coordinates().longitude();
+            location.setValue(selected.normalizedAddress());
+            locationHint.setText(getTranslation("customer.discover.location.verified"));
+        });
+        if (customerLatitude == null) {
+            sessionService.getCurrentUser()
+                    .filter(user -> user.getAddress() != null && !user.getAddress().isBlank())
+                    .flatMap(user -> locationService.forwardGeocode(String.join(", ",
+                            java.util.stream.Stream.of(user.getAddress(), user.getPostalCode(), user.getCity())
+                                    .filter(value -> value != null && !value.isBlank())
+                                    .toList())))
+                    .ifPresent(selected -> {
+                        customerLatitude = selected.coordinates().latitude();
+                        customerLongitude = selected.coordinates().longitude();
+                        sessionService.setSelectedDeliveryLocation(selected);
+                        location.setValue(selected.normalizedAddress());
+                        locationHint.setText(getTranslation("customer.discover.location.verified"));
+                    });
+        }
     }
 
     private Div createFilterPanel() {
@@ -206,11 +280,18 @@ public class CustomerDiscoverView extends VerticalLayout {
                         return;
                     }
                     String[] parts = value.split(",");
-                    customerLatitude = Double.parseDouble(parts[0]);
-                    customerLongitude = Double.parseDouble(parts[1]);
-                    location.setValue(String.format(Locale.US, "%.5f, %.5f", customerLatitude, customerLongitude));
-                    locationHint.setText(getTranslation("customer.discover.location.sorted"));
-                    refreshRestaurants();
+                    double latitude = Double.parseDouble(parts[0]);
+                    double longitude = Double.parseDouble(parts[1]);
+                    locationService.reverseGeocode(latitude, longitude)
+                            .ifPresentOrElse(
+                                    resolved -> applyLocation(resolved, getTranslation("customer.discover.location.sorted")),
+                                    () -> {
+                                        customerLatitude = latitude;
+                                        customerLongitude = longitude;
+                                        location.setValue(getTranslation("customer.discover.location.current"));
+                                        locationHint.setText(getTranslation("customer.discover.location.sorted"));
+                                        refreshRestaurants();
+                                    });
                 });
     }
 
@@ -354,16 +435,23 @@ public class CustomerDiscoverView extends VerticalLayout {
     }
 
     private String restaurantHint(Restaurant restaurant) {
+        String distance = customerLatitude != null && restaurant.getLatitude() != null
+                ? getTranslation("customer.discover.distance", String.format(Locale.US, "%.1f", distanceOrFallback(restaurant)))
+                : null;
         if (restaurant.getStatus() == RestaurantStatus.CLOSED) {
-            return nextOpeningText(restaurant);
+            return joinHint(distance, nextOpeningText(restaurant));
         }
         if (restaurant.getStatus() == RestaurantStatus.BUSY) {
-            return getTranslation("customer.discover.status.busy");
+            return joinHint(distance, getTranslation("customer.discover.status.busy"));
         }
-        if (customerLatitude != null && restaurant.getLatitude() != null) {
-            return getTranslation("customer.discover.distance", String.format(Locale.US, "%.1f", distanceOrFallback(restaurant)));
+        return distance == null ? getTranslation("customer.discover.status.open") : distance;
+    }
+
+    private String joinHint(String distance, String status) {
+        if (distance == null || distance.isBlank()) {
+            return status;
         }
-        return getTranslation("customer.discover.status.open");
+        return distance + " · " + status;
     }
 
     private String nextOpeningText(Restaurant restaurant) {
@@ -414,7 +502,7 @@ public class CustomerDiscoverView extends VerticalLayout {
 
     private String cuisineEmoji(String cuisine) {
         if (cuisine == null) {
-            return "🍽";
+            return "🍽️";
         }
         String normalized = cuisine.toLowerCase(Locale.ROOT);
         if (normalized.contains("pizza")) return "🍕";
@@ -424,7 +512,15 @@ public class CustomerDiscoverView extends VerticalLayout {
         if (normalized.contains("cafe") || normalized.contains("coffee")) return "☕";
         if (normalized.contains("mediterranean")) return "🥙";
         if (normalized.contains("vegan")) return "🥗";
-        return "🍽";
+        if (normalized.contains("austrian") || normalized.contains("tyrolean")) return "🇦🇹";
+        if (normalized.contains("greek")) return "🇬🇷";
+        if (normalized.contains("italian") || normalized.contains("pasta")) return "🇮🇹";
+        if (normalized.contains("indian") || normalized.contains("curry")) return "🇮🇳";
+        if (normalized.contains("nepal")) return "🇳🇵";
+        if (normalized.contains("mexican") || normalized.contains("taco")) return "🇲🇽";
+        if (normalized.contains("filipino")) return "🇵🇭";
+        if (normalized.contains("middle eastern") || normalized.contains("caucasian")) return "🥙";
+        return "🍽️";
     }
 
     private String imageOrPlaceholder(String imageUrl, String placeholder) {

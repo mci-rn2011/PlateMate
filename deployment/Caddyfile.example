@@ -1,0 +1,18 @@
+# PlateMate production reverse proxy.
+# Copy the relevant block into your server Caddyfile and reload Caddy.
+
+platemate.at {
+    encode zstd gzip
+
+    reverse_proxy 127.0.0.1:8081
+
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+}
+
+www.platemate.at {
+    redir https://platemate.at{uri} permanent
+}

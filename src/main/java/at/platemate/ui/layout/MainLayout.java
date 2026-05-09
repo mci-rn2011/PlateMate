@@ -3,6 +3,7 @@ package at.platemate.ui.layout;
 import at.platemate.auth.MockSessionService;
 import at.platemate.cart.CartService;
 import at.platemate.order.CustomerOrder;
+import at.platemate.order.OrderEventBroadcaster;
 import at.platemate.order.OrderService;
 import at.platemate.order.OrderStatus;
 import at.platemate.user.Role;
@@ -17,6 +18,8 @@ import at.platemate.ui.preferences.PreferenceControls;
 import at.platemate.ui.preferences.UiPreferencesService;
 import at.platemate.ui.restaurant.RestaurantDashboardView;
 import at.platemate.ui.restaurant.RestaurantStudioView;
+import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.DetachEvent;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.applayout.AppLayout;
 import com.vaadin.flow.component.button.Button;
@@ -32,11 +35,21 @@ import java.util.List;
 
 public class MainLayout extends AppLayout {
 
+    private final MockSessionService sessionService;
+    private final OrderService orderService;
+    private final OrderEventBroadcaster orderEventBroadcaster;
+    private Div activeDeliveryFloating;
+    private OrderEventBroadcaster.Registration orderRegistration;
+
     public MainLayout(
             MockSessionService sessionService,
             UiPreferencesService preferences,
             CartService cartService,
-            OrderService orderService) {
+            OrderService orderService,
+            OrderEventBroadcaster orderEventBroadcaster) {
+        this.sessionService = sessionService;
+        this.orderService = orderService;
+        this.orderEventBroadcaster = orderEventBroadcaster;
         preferences.apply(UI.getCurrent());
 
         HorizontalLayout nav = new HorizontalLayout();
@@ -78,7 +91,23 @@ public class MainLayout extends AppLayout {
         nav.add(controls);
 
         addToNavbar(nav);
-        addActiveDeliveryShortcut(sessionService, orderService);
+        refreshActiveDeliveryShortcut();
+    }
+
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+        UI ui = attachEvent.getUI();
+        orderRegistration = orderEventBroadcaster.subscribeToAll(() -> ui.access(this::refreshActiveDeliveryShortcut));
+    }
+
+    @Override
+    protected void onDetach(DetachEvent detachEvent) {
+        super.onDetach(detachEvent);
+        if (orderRegistration != null) {
+            orderRegistration.unregister();
+            orderRegistration = null;
+        }
     }
 
     private HorizontalLayout createBrand() {
@@ -134,7 +163,12 @@ public class MainLayout extends AppLayout {
         return cart;
     }
 
-    private void addActiveDeliveryShortcut(MockSessionService sessionService, OrderService orderService) {
+    private void refreshActiveDeliveryShortcut() {
+        if (activeDeliveryFloating != null) {
+            getElement().removeChild(activeDeliveryFloating.getElement());
+            activeDeliveryFloating = null;
+        }
+
         boolean hasActiveOrder = sessionService.getCurrentUser()
                 .filter(user -> user.getRole() == Role.CUSTOMER)
                 .map(orderService::findCustomerOrders)
@@ -154,6 +188,7 @@ public class MainLayout extends AppLayout {
                 event -> UI.getCurrent().navigate(CustomerProfileView.class));
         goToProfile.addClassName("pm-primary-action");
         floating.add(goToProfile);
+        activeDeliveryFloating = floating;
         getElement().appendChild(floating.getElement());
     }
 

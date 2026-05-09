@@ -1,8 +1,12 @@
 package at.platemate.ui.customer;
 
+import java.util.List;
+
 import at.platemate.auth.MockSessionService;
 import at.platemate.cart.CartLine;
 import at.platemate.cart.CartService;
+import at.platemate.delivery.GeocodedLocation;
+import at.platemate.delivery.LocationService;
 import at.platemate.menu.MenuItem;
 import at.platemate.order.OrderService;
 import at.platemate.restaurant.Restaurant;
@@ -10,6 +14,7 @@ import at.platemate.restaurant.RestaurantService;
 import at.platemate.ui.layout.MainLayout;
 import at.platemate.user.User;
 import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
@@ -36,6 +41,7 @@ public class CustomerCartView extends VerticalLayout {
     private final RestaurantService restaurantService;
     private final OrderService orderService;
     private final MockSessionService sessionService;
+    private final LocationService locationService;
     private final Div lines = new Div();
     private final Span total = new Span();
     private final TextField name = new TextField();
@@ -50,11 +56,13 @@ public class CustomerCartView extends VerticalLayout {
             CartService cartService,
             RestaurantService restaurantService,
             OrderService orderService,
-            MockSessionService sessionService) {
+            MockSessionService sessionService,
+            LocationService locationService) {
         this.cartService = cartService;
         this.restaurantService = restaurantService;
         this.orderService = orderService;
         this.sessionService = sessionService;
+        this.locationService = locationService;
 
         setSizeFull();
         setPadding(false);
@@ -168,15 +176,15 @@ public class CustomerCartView extends VerticalLayout {
         postalCode.addClassName("pm-required-field");
         city.addClassName("pm-required-field");
 
-        Div addressGrid = new Div(address, postalCode, city);
-        addressGrid.addClassName("pm-checkout-address-grid");
+        Div cityGrid = new Div(postalCode, city);
+        cityGrid.addClassName("pm-checkout-city-grid");
 
         Div totalRow = new Div(new Span(getTranslation("customer.checkout.total")), total);
         totalRow.addClassName("pm-total-row");
 
         Button pay = new Button(getTranslation("customer.checkout.pay"), event -> placeOrder());
         pay.addClassName("pm-primary-action");
-        summary.add(name, phone, email, addressGrid, note, totalRow, pay);
+        summary.add(name, phone, email, address, cityGrid, note, totalRow, pay);
         return summary;
     }
 
@@ -188,6 +196,20 @@ public class CustomerCartView extends VerticalLayout {
             if (email.isEmpty() && user.getUsername() != null && user.getUsername().contains("@")) {
                 email.setValue(user.getUsername());
             }
+            if (address.isEmpty() && user.getAddress() != null) {
+                address.setValue(user.getAddress());
+            }
+            if (postalCode.isEmpty() && user.getPostalCode() != null) {
+                postalCode.setValue(user.getPostalCode());
+            }
+            if (city.isEmpty() && user.getCity() != null) {
+                city.setValue(user.getCity());
+            }
+        });
+        sessionService.getSelectedDeliveryLocation().ifPresent(selected -> {
+            if (address.isEmpty()) {
+                address.setValue(selected.normalizedAddress());
+            }
         });
     }
 
@@ -197,6 +219,40 @@ public class CustomerCartView extends VerticalLayout {
             Notification.show(getTranslation("customer.checkout.required"));
             return;
         }
+        List<GeocodedLocation> suggestions = locationService.searchForwardGeocode(buildDeliveryAddressSearchString(), 5);
+        if (suggestions.isEmpty()) {
+            Notification.show(getTranslation("customer.checkout.location.notFound"));
+            return;
+        }
+        if (suggestions.size() == 1) {
+            submitOrder(suggestions.get(0));
+            return;
+        }
+        showCheckoutLocationPicker(suggestions);
+    }
+
+    private void showCheckoutLocationPicker(List<GeocodedLocation> suggestions) {
+        Dialog dialog = new Dialog();
+        dialog.addClassName("pm-location-picker-dialog");
+        dialog.setHeaderTitle(getTranslation("customer.checkout.location.choose"));
+        Div list = new Div();
+        list.addClassName("pm-location-suggestion-list");
+        suggestions.forEach(suggestion -> {
+            Button option = new Button(suggestion.normalizedAddress(), event -> {
+                dialog.close();
+                submitOrder(suggestion);
+            });
+            option.addClassName("pm-location-suggestion");
+            list.add(option);
+        });
+        dialog.add(list);
+        dialog.getFooter().add(new Button(getTranslation("action.close"), event -> dialog.close()));
+        dialog.open();
+    }
+
+    private void submitOrder(GeocodedLocation selectedLocation) {
+        sessionService.setSelectedDeliveryLocation(selectedLocation);
+        address.setValue(selectedLocation.normalizedAddress());
         OrderService.CheckoutDetails details = new OrderService.CheckoutDetails(
                 name.getValue(),
                 phone.getValue(),
@@ -214,6 +270,12 @@ public class CustomerCartView extends VerticalLayout {
         Notification.show(getTranslation("checkout.orderPlaced"));
         CustomerCartBadge.update(cartService);
         getUI().ifPresent(ui -> ui.navigate(CustomerProfileView.class));
+    }
+
+    private String buildDeliveryAddressSearchString() {
+        return String.join(", ", java.util.stream.Stream.of(address.getValue(), postalCode.getValue(), city.getValue())
+                .filter(value -> value != null && !value.isBlank())
+                .toList());
     }
 
     private Div emptyState() {

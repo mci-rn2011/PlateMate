@@ -3,6 +3,7 @@ package at.platemate.auth;
 import java.util.Optional;
 import java.util.UUID;
 
+import at.platemate.delivery.GeocodedLocation;
 import at.platemate.user.Role;
 import at.platemate.user.User;
 import at.platemate.user.UserRepository;
@@ -16,6 +17,7 @@ public class MockSessionService {
     private final UserRepository userRepository;
     private User currentUser;
     private final String guestSessionId = UUID.randomUUID().toString();
+    private GeocodedLocation selectedDeliveryLocation;
 
     public MockSessionService(UserRepository userRepository) {
         this.userRepository = userRepository;
@@ -52,6 +54,18 @@ public class MockSessionService {
 
     public void login(User user) {
         this.currentUser = user;
+    }
+
+    public Optional<GeocodedLocation> getSelectedDeliveryLocation() {
+        return Optional.ofNullable(selectedDeliveryLocation);
+    }
+
+    public void setSelectedDeliveryLocation(GeocodedLocation selectedDeliveryLocation) {
+        this.selectedDeliveryLocation = selectedDeliveryLocation;
+    }
+
+    public void clearSelectedDeliveryLocation() {
+        this.selectedDeliveryLocation = null;
     }
 
     public void logout() {

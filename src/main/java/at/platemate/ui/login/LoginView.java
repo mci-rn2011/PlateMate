@@ -1,6 +1,7 @@
 package at.platemate.ui.login;
 
 import java.util.List;
+import java.util.Comparator;
 
 import at.platemate.auth.MockSessionService;
 import at.platemate.ui.customer.CustomerDiscoverView;
@@ -132,18 +133,38 @@ public class LoginView extends VerticalLayout implements BeforeEnterObserver {
         Div taskbar = new Div();
         taskbar.addClassName("pm-admin-taskbar");
 
-        for (User user : userRepository.findAll()) {
-            if ("guest".equalsIgnoreCase(user.getUsername())) {
-                continue;
-            }
-            Button shortcut = new Button(roleIcon(user.getRole()) + " " + firstName(user), event -> {
-                sessionService.login(user);
-                navigateByRole(user.getRole());
-            });
-            shortcut.addClassName("pm-admin-shortcut");
-            taskbar.add(shortcut);
-        }
+        taskbar.add(
+                createAdminGroup("People", Role.CUSTOMER),
+                createAdminGroup("Drivers", Role.DRIVER),
+                createAdminGroup("Restaurants", Role.RESTAURANT));
         return taskbar;
+    }
+
+    private Div createAdminGroup(String title, Role role) {
+        Div group = new Div();
+        group.addClassNames("pm-admin-group", "is-" + role.name().toLowerCase());
+        Span heading = new Span(title);
+        heading.addClassName("pm-admin-group-title");
+
+        Div shortcuts = new Div();
+        shortcuts.addClassName("pm-admin-shortcut-list");
+        userRepository.findAll().stream()
+                .filter(user -> user.getRole() == role)
+                .filter(user -> !"guest".equalsIgnoreCase(user.getUsername()))
+                .sorted(Comparator.comparing(this::firstName, String.CASE_INSENSITIVE_ORDER))
+                .forEach(user -> shortcuts.add(createAdminShortcut(user)));
+
+        group.add(heading, shortcuts);
+        return group;
+    }
+
+    private Button createAdminShortcut(User user) {
+        Button shortcut = new Button(roleIcon(user.getRole()) + " " + firstName(user), event -> {
+            sessionService.login(user);
+            navigateByRole(user.getRole());
+        });
+        shortcut.addClassName("pm-admin-shortcut");
+        return shortcut;
     }
 
     private Div createFooter() {

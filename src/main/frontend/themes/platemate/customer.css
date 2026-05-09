@@ -331,10 +331,26 @@ html[theme~="dark"] .pm-order-detail-line {
     gap: var(--lumo-space-m);
 }
 
-.pm-checkout-address-grid {
+.pm-checkout-city-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1.5fr) minmax(8rem, 0.6fr) minmax(0, 1fr);
+    grid-template-columns: minmax(8rem, 0.55fr) minmax(0, 1fr);
     gap: var(--lumo-space-s);
+}
+
+.pm-location-suggestion-list {
+    display: grid;
+    gap: var(--lumo-space-s);
+    width: min(680px, calc(100vw - 3rem));
+}
+
+.pm-location-suggestion {
+    justify-content: flex-start;
+    min-height: 3rem;
+    border-radius: 18px;
+    background: var(--pm-card);
+    color: var(--lumo-body-text-color);
+    box-shadow: inset 0 0 0 1px var(--pm-card-border);
+    text-align: left;
 }
 
 .pm-cart-thumb {
@@ -531,7 +547,7 @@ html[theme~="dark"] .pm-active-delivery-floating {
     .pm-location-row,
     .pm-menu-hero,
     .pm-cart-layout,
-    .pm-checkout-address-grid {
+    .pm-checkout-city-grid {
         grid-template-columns: 1fr;
     }
 

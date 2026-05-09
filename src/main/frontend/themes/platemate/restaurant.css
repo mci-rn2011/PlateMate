@@ -793,6 +793,10 @@ html[theme~="dark"] .pm-sort-badge {
     align-items: start;
 }
 
+.pm-order-board-past {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+}
+
 .pm-order-lane {
     display: grid;
     gap: var(--lumo-space-m);

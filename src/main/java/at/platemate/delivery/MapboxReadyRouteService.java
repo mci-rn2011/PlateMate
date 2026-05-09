@@ -53,14 +53,14 @@ public class MapboxReadyRouteService implements RouteService {
                 .max(new BigDecimal("0.80"))
                 .setScale(2, RoundingMode.HALF_UP);
         int minutes = Math.max(5, distance.multiply(new BigDecimal("3.0")).setScale(0, RoundingMode.CEILING).intValue());
-        return new RouteEstimate(distance, minutes, staticPreviewUrl(origin.get(), destination.get(), null));
+        return new RouteEstimate(distance, minutes, null);
     }
 
     private Optional<RouteEstimate> fetchMapboxRoute(GeoPoint origin, GeoPoint destination) {
         try {
             URI uri = URI.create("https://api.mapbox.com/directions/v5/mapbox/driving/"
                     + coordinate(origin) + ";" + coordinate(destination)
-                    + "?overview=full&geometries=polyline&access_token=" + url(mapboxToken));
+                    + "?overview=simplified&geometries=polyline&access_token=" + url(mapboxToken));
             HttpRequest request = HttpRequest.newBuilder(uri)
                     .timeout(Duration.ofSeconds(6))
                     .GET()
@@ -76,8 +76,56 @@ public class MapboxReadyRouteService implements RouteService {
             BigDecimal distanceKm = BigDecimal.valueOf(firstRoute.path("distance").asDouble() / 1000.0)
                     .setScale(2, RoundingMode.HALF_UP);
             int minutes = Math.max(1, (int) Math.ceil(firstRoute.path("duration").asDouble() / 60.0));
-            String polyline = firstRoute.path("geometry").asText(null);
-            return Optional.of(new RouteEstimate(distanceKm, minutes, staticPreviewUrl(origin, destination, polyline)));
+            return Optional.of(new RouteEstimate(distanceKm, minutes, internalPreviewUrl(origin, destination)));
+        } catch (Exception ex) {
+            return Optional.empty();
+        }
+    }
+
+    public String buildStaticPreviewUrl(GeoPoint origin, GeoPoint destination) {
+        if (mapboxToken.isBlank()) {
+            return null;
+        }
+        String polyline = fetchPolyline(origin, destination).orElse(null);
+        if (polyline == null || polyline.isBlank()) {
+            return null;
+        }
+        String previewUrl = staticPreviewUrl(origin, destination, polyline);
+        if (previewUrl != null && previewUrl.length() > 7500) {
+            return null;
+        }
+        return previewUrl;
+    }
+
+    public boolean hasMapboxToken() {
+        return !mapboxToken.isBlank();
+    }
+
+    private String internalPreviewUrl(GeoPoint origin, GeoPoint destination) {
+        return "/api/route-preview?originLat=" + origin.latitude()
+                + "&originLon=" + origin.longitude()
+                + "&destinationLat=" + destination.latitude()
+                + "&destinationLon=" + destination.longitude();
+    }
+
+    private Optional<String> fetchPolyline(GeoPoint origin, GeoPoint destination) {
+        try {
+            URI uri = URI.create("https://api.mapbox.com/directions/v5/mapbox/driving/"
+                    + coordinate(origin) + ";" + coordinate(destination)
+                    + "?overview=simplified&geometries=polyline&access_token=" + url(mapboxToken));
+            HttpRequest request = HttpRequest.newBuilder(uri)
+                    .timeout(Duration.ofSeconds(6))
+                    .GET()
+                    .build();
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                return Optional.empty();
+            }
+            JsonNode firstRoute = objectMapper.readTree(response.body()).path("routes").path(0);
+            if (firstRoute.isMissingNode()) {
+                return Optional.empty();
+            }
+            return Optional.ofNullable(firstRoute.path("geometry").asText(null));
         } catch (Exception ex) {
             return Optional.empty();
         }
