@@ -28,8 +28,17 @@ Copy-Item -Path (Join-Path $RepoPath "target\platemate-0.0.1-SNAPSHOT.jar") `
     -Destination (Join-Path $RuntimePath "platemate.jar") `
     -Force
 
+$env:PLATEMATE_REPO_PATH = $RepoPath
+$env:PLATEMATE_RUNTIME_PATH = $RuntimePath
+
 $ecosystemPath = Join-Path $RepoPath "deployment\ecosystem.config.js"
-$pm2Status = pm2 describe $AppName 2>$null
+$pm2Status = $null
+try {
+    $pm2Status = pm2 describe $AppName 2>$null
+} catch {
+    $pm2Status = $null
+}
+
 if ($LASTEXITCODE -eq 0 -and $pm2Status) {
     pm2 restart $AppName --update-env
 } else {
