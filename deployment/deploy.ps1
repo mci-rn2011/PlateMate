@@ -31,7 +31,7 @@ Copy-Item -Path (Join-Path $RepoPath "target\platemate-0.0.1-SNAPSHOT.jar") `
 $env:PLATEMATE_REPO_PATH = $RepoPath
 $env:PLATEMATE_RUNTIME_PATH = $RuntimePath
 
-$ecosystemPath = Join-Path $RepoPath "deployment\ecosystem.config.js"
+$ecosystemPath = Join-Path $RepoPath "deployment\ecosystem.config.cjs"
 $pm2Status = $null
 try {
     $pm2Status = pm2 describe $AppName 2>$null

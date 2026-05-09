@@ -5,7 +5,7 @@ This folder contains templates for hosting PlateMate on a Windows Server with Ca
 ## Files
 
 - `Caddyfile.example`: reverse proxy from `platemate.at` to the Java app on `127.0.0.1:8081`.
-- `ecosystem.config.js`: pm2 process config for the Spring Boot JAR and GitHub webhook.
+- `ecosystem.config.cjs`: pm2 process config for the Spring Boot JAR and GitHub webhook.
 - `deploy.ps1`: pulls, builds, copies the JAR, and restarts pm2.
 - `webhook-server.js`: tiny GitHub webhook receiver using only Node built-ins.
 
@@ -37,7 +37,7 @@ powershell -ExecutionPolicy Bypass -File C:\apps\platemate\repo\deployment\deplo
 If you want to start both PM2 apps manually:
 
 ```powershell
-pm2 start C:\apps\platemate\repo\deployment\ecosystem.config.js
+pm2 start C:\apps\platemate\repo\deployment\ecosystem.config.cjs
 pm2 save
 ```
 
@@ -58,7 +58,7 @@ Set a strong `PLATEMATE_WEBHOOK_SECRET` in the server environment.
 Start the webhook:
 
 ```powershell
-pm2 start C:\apps\platemate\repo\deployment\ecosystem.config.js --only platemate-webhook
+pm2 start C:\apps\platemate\repo\deployment\ecosystem.config.cjs --only platemate-webhook
 pm2 save
 ```
 
