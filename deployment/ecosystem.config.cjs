@@ -53,7 +53,7 @@ module.exports = {
     },
     {
       name: "platemate-webhook",
-      script: `${repoPath}\\deployment\\webhook-server.js`,
+      script: `${repoPath}\\deployment\\webhook-server.cjs`,
       cwd: repoPath,
       env: {
         PLATEMATE_WEBHOOK_PORT: process.env.PLATEMATE_WEBHOOK_PORT || "9091",

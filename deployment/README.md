@@ -7,7 +7,7 @@ This folder contains templates for hosting PlateMate on a Windows Server with Ca
 - `Caddyfile.example`: reverse proxy from `platemate.at` to the Java app on `127.0.0.1:8081`.
 - `ecosystem.config.cjs`: pm2 process config for the Spring Boot JAR and GitHub webhook.
 - `deploy.ps1`: pulls, builds, copies the JAR, and restarts pm2.
-- `webhook-server.js`: tiny GitHub webhook receiver using only Node built-ins.
+- `webhook-server.cjs`: tiny GitHub webhook receiver using only Node built-ins.
 
 ## First Server Setup
 
