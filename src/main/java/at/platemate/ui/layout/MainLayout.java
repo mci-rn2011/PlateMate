@@ -169,6 +169,12 @@ public class MainLayout extends AppLayout {
             activeDeliveryFloating = null;
         }
 
+        // Disabled for the demo presentation; active deliveries remain visible on the profile page.
+        boolean showActiveDeliveryShortcut = false;
+        if (!showActiveDeliveryShortcut) {
+            return;
+        }
+
         boolean hasActiveOrder = sessionService.getCurrentUser()
                 .filter(user -> user.getRole() == Role.CUSTOMER)
                 .map(orderService::findCustomerOrders)
