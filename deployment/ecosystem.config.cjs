@@ -6,6 +6,7 @@ const appRoot = process.env.PLATEMATE_APP_ROOT || "C:\\apps\\platemate";
 const repoPath = process.env.PLATEMATE_REPO_PATH || defaultRepoPath;
 const runtimePath = process.env.PLATEMATE_RUNTIME_PATH || `${appRoot}\\current`;
 
+loadEnvFile(path.join(appRoot, ".env"));
 loadEnvFile(path.join(repoPath, ".env"));
 
 function loadEnvFile(filePath) {

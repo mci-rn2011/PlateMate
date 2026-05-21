@@ -18,26 +18,35 @@ if (-not $SkipGitPull) {
     git pull --ff-only
 }
 
-if (-not $JavaHome) {
+function Test-JavaHome {
+    param([string] $Path)
+
+    return $Path -and (Test-Path (Join-Path $Path "bin\java.exe"))
+}
+
+if (-not (Test-JavaHome $JavaHome)) {
+    $JavaHome = ""
     $javaCandidates = @(
         "C:\Program Files\Java\jdk-21",
+        "C:\Program Files\Java\jdk-21.0.2",
+        "C:\Program Files\Java\jdk-21*",
         "C:\Program Files\Eclipse Adoptium\jdk-21*",
         "C:\Program Files\Temurin\jdk-21*"
     )
 
     foreach ($candidate in $javaCandidates) {
-        $match = Get-ChildItem -Path $candidate -Directory -ErrorAction SilentlyContinue |
-            Sort-Object FullName -Descending |
-            Select-Object -First 1
+        $matches = Get-Item -Path $candidate -ErrorAction SilentlyContinue |
+            Where-Object { $_.PSIsContainer -and (Test-JavaHome $_.FullName) } |
+            Sort-Object FullName -Descending
 
-        if ($match) {
-            $JavaHome = $match.FullName
+        if ($matches) {
+            $JavaHome = $matches[0].FullName
             break
         }
     }
 }
 
-if ($JavaHome) {
+if (Test-JavaHome $JavaHome) {
     $env:JAVA_HOME = $JavaHome
     $env:Path = "$env:JAVA_HOME\bin;$env:Path"
 } elseif (-not (Get-Command java -ErrorAction SilentlyContinue)) {
@@ -47,9 +56,18 @@ if ($JavaHome) {
 $env:VAADIN_USAGE_STATS_ENABLED = "false"
 
 mvn -Pproduction -DskipTests package
+if ($LASTEXITCODE -ne 0) {
+    throw "Production Maven build failed with exit code $LASTEXITCODE"
+}
 
 New-Item -ItemType Directory -Force -Path $RuntimePath | Out-Null
-Copy-Item -Path (Join-Path $RepoPath "target\platemate-0.0.1-SNAPSHOT.jar") `
+$jarPath = Join-Path $RepoPath "target\platemate-0.0.1-SNAPSHOT.jar"
+
+if (-not (Test-Path $jarPath)) {
+    throw "Build artifact was not found: $jarPath"
+}
+
+Copy-Item -Path $jarPath `
     -Destination (Join-Path $RuntimePath "platemate.jar") `
     -Force
 

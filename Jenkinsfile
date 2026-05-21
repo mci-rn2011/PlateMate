@@ -3,6 +3,7 @@ pipeline {
 
     environment {
         VAADIN_USAGE_STATS_ENABLED = 'false'
+        PLATEMATE_APP_ROOT = 'C:\\apps\\platemate'
         PLATEMATE_RUNTIME_PATH = 'C:\\apps\\platemate\\current'
     }
 
