@@ -2,6 +2,7 @@ param(
     [string] $RepoPath = $(if ($env:PLATEMATE_REPO_PATH) { $env:PLATEMATE_REPO_PATH } else { Split-Path -Parent $PSScriptRoot }),
     [string] $RuntimePath = $(if ($env:PLATEMATE_RUNTIME_PATH) { $env:PLATEMATE_RUNTIME_PATH } else { "C:\apps\platemate\current" }),
     [string] $AppName = "platemate",
+    [string] $JavaHome = $(if ($env:JAVA_HOME) { $env:JAVA_HOME } else { "" }),
     [switch] $SkipGitPull
 )
 
@@ -17,8 +18,32 @@ if (-not $SkipGitPull) {
     git pull --ff-only
 }
 
-$env:JAVA_HOME = "C:\Program Files\Java\jdk-21"
-$env:Path = "$env:JAVA_HOME\bin;$env:Path"
+if (-not $JavaHome) {
+    $javaCandidates = @(
+        "C:\Program Files\Java\jdk-21",
+        "C:\Program Files\Eclipse Adoptium\jdk-21*",
+        "C:\Program Files\Temurin\jdk-21*"
+    )
+
+    foreach ($candidate in $javaCandidates) {
+        $match = Get-ChildItem -Path $candidate -Directory -ErrorAction SilentlyContinue |
+            Sort-Object FullName -Descending |
+            Select-Object -First 1
+
+        if ($match) {
+            $JavaHome = $match.FullName
+            break
+        }
+    }
+}
+
+if ($JavaHome) {
+    $env:JAVA_HOME = $JavaHome
+    $env:Path = "$env:JAVA_HOME\bin;$env:Path"
+} elseif (-not (Get-Command java -ErrorAction SilentlyContinue)) {
+    throw "Java 21 was not found. Set JAVA_HOME or install JDK 21."
+}
+
 $env:VAADIN_USAGE_STATS_ENABLED = "false"
 
 mvn -Pproduction -DskipTests package
